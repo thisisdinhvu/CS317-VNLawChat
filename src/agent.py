@@ -19,14 +19,13 @@ if not GOOGLE_API_KEY:
 
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
-def add(a: int, b: int) -> int:
-    """Cộng hai số nguyên a và b."""
+def add (a : int, b : int) -> int:
+    """Adds two integers and returns the result."""
     print(f"Tool 'add' called with inputs: a={a}, b={b}")
     return a + b
-
-def subtract(a: int, b: int) -> int:
-    """Trừ số nguyên b khỏi a."""
-    print(f"Tool 'subtract' called with inputs: a={a}, b={b}")
+def subtract (a : int, b : int) -> int:
+    """Subtract two numbers and returns the result."""
+    print(f"Tool 'substract' called with inputs: a={a}, b={b}")
     return a - b
 
 tools = [add, subtract, retrieve_from_pinecone]
@@ -39,6 +38,11 @@ class State(TypedDict):
 graph_builder = StateGraph(State)
 
 def chatbot(state: State):
+    """
+    Processes the conversation state and generates a response.
+    If a tool has been called, uses the tool's result to answer the user's question.
+    Otherwise, lets the LLM decide to answer directly or call a tool.
+    """
     messages = state["messages"]
     user_message = next((msg for msg in reversed(messages) if isinstance(msg, HumanMessage)), None)
     if not user_message:
@@ -50,16 +54,20 @@ def chatbot(state: State):
                 return {"messages": [AIMessage(content=f"The result is {msg.content}.")]}
             elif msg.name == "retrieve_from_pinecone":
                 prompt = (
-                    f"Bạn là trợ lý luật. Người dùng hỏi: '{user_message.content}'.\n\n"
-                    f"Các tài liệu truy xuất:\n{msg.content}\n\n"
-                    "Hãy xác định các tài liệu có liên quan không. Nếu có, trả lời ngắn gọn, rõ ràng bằng tiếng Việt. "
-                    "Nếu không liên quan, trả lời: 'Tôi không có thông tin liên quan đến câu hỏi này.'"
+                f"You are a helpful assistant. The user asked: '{user_message.content}'.\n\n"
+                "Here are some retrieved documents from a Vietnamese law database:\n"
+                f"{msg.content}\n\n"
+                "First, determine if these documents contain information relevant to the user's question. "
+                "If they do, provide a concise and accurate answer to the user's question based on the documents. "
+                "Format the answer in a user-friendly way, using bullet points or a short paragraph as appropriate. "
+                "If the documents are not relevant to the question, respond with: 'I don’t have any information related to the question.'"
+                "Everything you say must be in Vietnamese"
                 )
                 response = llm.invoke([HumanMessage(content=prompt)])
                 return {"messages": [response]}
 
     system_message = SystemMessage(
-        content="Bạn là trợ lý luật Việt Nam. Sử dụng công cụ (add, subtract, retrieve_from_pinecone) nếu cần.")
+        content="You are a helpful assistant. You can answer any question to the best of your knowledge, using the available tools (add, subtract, retrieve_from_pinecone) only when necessary.")
     response = llm_with_tools.invoke([system_message, user_message])
     return {"messages": [response]}
 
