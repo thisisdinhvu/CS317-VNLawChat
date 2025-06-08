@@ -1,0 +1,72 @@
+groups:
+  - name: chatbot-alerts
+    rules:
+      # === 1. Latency cảnh báo nếu 95% request lâu hơn 2s ===
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on /ask"
+          description: "95th percentile request latency is > 2s."
+
+      # === 2. Inference time (nếu bạn có metric inference_duration_seconds custom) ===
+      - alert: SlowInference
+        expr: avg_over_time(inference_duration_seconds[2m]) > 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Model inference is slow"
+          description: "Average inference time is above 2s."
+
+      # === 3. High error rate trên các endpoint ===
+      - alert: High5xxErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[2m]) / rate(http_requests_total[2m]) > 0.2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High 5xx Error Rate"
+          description: "More than 20% requests return 5xx errors."
+
+      # === 4. GC collect abnormal (gợi ý, nhiều vòng GC liên tục có thể do memory leak) ===
+      - alert: FrequentGCCollections
+        expr: increase(python_gc_collections_total{generation="2"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Frequent GC collections"
+          description: "GC Gen2 has been collected more than 10 times in 5 minutes."
+
+      # === 5. High Memory Usage (từ process) ===
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 300000000  # > ~300MB
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "The chatbot process is using more than 300MB RAM."
+
+      # === 6. Too many open file descriptors (đôi khi gây lỗi server) ===
+      - alert: TooManyOpenFDs
+        expr: process_open_fds / process_max_fds > 0.8
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many file descriptors used"
+          description: "More than 80% of max file descriptors are open."
+
+      # === 7. API Unresponsive (không request nào trong 5m) ===
+      - alert: NoAPIRequests
+        expr: rate(http_requests_total[5m]) < 0.01
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No incoming requests"
+          description: "No API requests received in the last 5 minutes."

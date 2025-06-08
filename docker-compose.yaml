@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  lawchat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cs317-ck_lawchat
+    ports:
+      - "8000:8000"
+    depends_on:
+      - prometheus
+      - fluentd
+    env_file:
+      - .env
+    volumes:
+      # - ./fluentd:/fluentd 
+      - ./logs:/fluentd/log      
+    logging:
+      driver: "json-file"    
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cs317-ck_prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+    - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: cs317-ck_node-exporter
+    pid: "host"
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+
+  grafana:
+    image: grafana/grafana
+    container_name: cs317-ck_grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    restart: always
+
+  fluentd:
+    image: fluent/fluentd:v1.14-1
+    container_name: cs317-ck_fluentd
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf
+      - ./logs:/fluentd/log
+    restart: always
+
+  alertmanager:
+    image: prom/alertmanager
+    container_name: cs317-ck_alertmanager
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "9093:9093"
+    restart: always

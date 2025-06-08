@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Luật Việt Nam Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px auto;
+      max-width: 600px;
+      background-color: #f6f8fa;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    textarea, button {
+      width: 100%;
+      margin-top: 10px;
+      font-size: 1em;
+    }
+    textarea {
+      height: 120px;
+      padding: 10px;
+    }
+    #response {
+      margin-top: 20px;
+      white-space: pre-line;
+      background-color: #eef;
+      padding: 15px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>💬 Hỏi luật Việt Nam</h2>
+  <textarea id="query" placeholder="Nhập câu hỏi về luật pháp..."></textarea>
+  <button onclick="sendQuestion()">Gửi câu hỏi</button>
+  <div id="response"></div>
+
+  <script>
+    async function sendQuestion() {
+      const query = document.getElementById('query').value;
+      const resBox = document.getElementById('response');
+      resBox.textContent = '⏳ Đang xử lý...';
+
+      try {
+        const res = await fetch('/ask', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query })
+        });
+
+        const data = await res.json();
+        resBox.textContent = data.response || '❌ Không có phản hồi từ chatbot.';
+      } catch (error) {
+        resBox.textContent = '⚠️ Lỗi gửi yêu cầu: ' + error;
+      }
+    }
+  </script>
+</body>
+</html>

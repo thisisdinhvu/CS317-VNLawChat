@@ -1,0 +1,15 @@
+langchain-google-genai
+google~=3.0.0
+google-genai==1.16.1
+langchain==0.3.25
+langgraph==0.4.8
+gradio_client==1.10.2
+uvicorn
+fastapi
+langchain-core
+pinecone
+typing-extensions
+
+prometheus-fastapi-instrumentator
+prometheus-client
+jinja2  
