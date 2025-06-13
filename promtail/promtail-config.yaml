@@ -1,0 +1,98 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    timeout: 10s
+    backoff_config:
+      max_period: 5m
+      max_retries: 10
+      min_period: 500ms
+
+scrape_configs:
+  # 1. Custom logfile from your FastAPI app
+  - job_name: lawchat
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: lawchat
+          __path__: /logs/lawchat.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) \[LAWCHAT\] (?P<level>\w+): (?P<message>.*)'
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02 15:04:05,000'
+      - labels:
+          level:
+      - output:
+          source: message
+
+
+  # 2. Docker stdout/stderr logs
+  - job_name: docker_stdout
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker_stdout
+          __path__: /var/lib/docker/containers/*/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            time: time
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+      - labels:
+          stream:
+      - match:
+          selector: '{stream="stdout"}'
+          stages:
+            - labels:
+                log_type: stdout
+      - match:
+          selector: '{stream="stderr"}'
+          stages:
+            - labels:
+                log_type: stderr
+      - output:
+          source: output
+
+  # 3. Syslog from host
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          __path__: /var/log/syslog
+    pipeline_stages:
+      - regex:
+          expression: '(?P<timestamp>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>\S+)\s+(?P<service>\S+):\s*(?P<message>.*)'
+      - timestamp:
+          source: timestamp
+          format: 'Jan 2 15:04:05'
+          location: 'Local'
+      - labels:
+          hostname:
+          service:
+
+  # 4. Systemd journal logs (optional, if host uses systemd)
+  - job_name: systemd
+    journal:
+      max_age: 12h
+      labels:
+        job: systemd
+    relabel_configs:
+      - source_labels: ['__journal__systemd_unit']
+        target_label: 'unit'
+      - source_labels: ['__journal_priority']
+        target_label: 'priority'

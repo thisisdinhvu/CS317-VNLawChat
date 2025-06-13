@@ -1,15 +1,17 @@
-langchain-google-genai
 google~=3.0.0
 google-genai==1.16.1
 langchain==0.3.25
 langgraph==0.4.8
 gradio_client==1.10.2
-uvicorn
-fastapi
-langchain-core
-pinecone
-typing-extensions
+python-dotenv==1.1.0
+fastapi==0.115.12
+uvicorn==0.30.6
+pinecone==7.0.1
+numpy==2.2.6
+langchain-google-genai
 
+typing-extensions
+python-dotenv
 prometheus-fastapi-instrumentator
 prometheus-client
 jinja2  

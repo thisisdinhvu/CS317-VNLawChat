@@ -3,17 +3,15 @@ import json
 from pinecone import Pinecone
 from langchain_core.tools import tool
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Pinecone setup (replace with your API key and index name)
-PIPECONE_API = os.getenv("PIPECONE_API")
-if not PIPECONE_API:
-    raise EnvironmentError("Missing PIPECONE_API in environment.")
-
-os.environ["PIPECONE_API"] = PIPECONE_API
-INDEX_NAME = "testing-n8n-rag"
+PINECONE_API = os.getenv('PINECONE_API_KEY')
+INDEX_NAME = os.getenv('PINCONE_LEGAL_DOCUMENT_INDEX')
 NAMESPACE = "bkai-legal-docs"
 
-pc = Pinecone(api_key=PIPECONE_API)
+pc = Pinecone(api_key=PINECONE_API)
 
 
 def get_index(index_name: str):
@@ -92,7 +90,7 @@ def retrieve_from_pinecone(query_text: str) -> str:
         embeddings = get_embeddings(query_text)
         query_response = index.query(
             vector=embeddings,
-            top_k=3,
+            top_k=5,
             include_metadata=True,
             namespace=NAMESPACE
         )
@@ -107,6 +105,7 @@ def retrieve_from_pinecone(query_text: str) -> str:
                 results.append(f"{i}. {metadata['text']}")
             else:
                 results.append(f"{i}. No content available for this document.")
+        print(results)
         return "\n".join(results)
     except Exception as e:
         return f"Error retrieving from Pinecone: {str(e)}"

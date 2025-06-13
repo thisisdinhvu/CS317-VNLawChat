@@ -1,0 +1,76 @@
+{
+  "title": "Lawchat API & System Logs",
+  "schemaVersion": 36,
+  "version": 1,
+  "tags": ["log", "loki", "syslog", "docker"],
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Lawchat API Log Stream",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 9 },
+      "targets": [
+        {
+          "expr": "{job=\"lawchat\"}",
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Docker stdout Logs",
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "{job=\"docker_stdout\", stream=\"stdout\"}",
+          "refId": "B",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Docker stderr Logs",
+      "gridPos": { "x": 0, "y": 17, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "{job=\"docker_stdout\", stream=\"stderr\"}",
+          "refId": "C",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "type": "logs",
+      "title": "System Logs (syslog)",
+      "gridPos": { "x": 0, "y": 25, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "{job=\"syslog\"}",
+          "refId": "D",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none"
+      }
+    }
+  ]
+}

@@ -8,7 +8,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High latency on /ask"
+          summary: "High latency on /chat"
           description: "95th percentile request latency is > 2s."
 
       # === 2. Inference time (nếu bạn có metric inference_duration_seconds custom) ===

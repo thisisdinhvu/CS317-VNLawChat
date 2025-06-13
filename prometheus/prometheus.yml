@@ -2,8 +2,8 @@ global:
   scrape_interval: 15s
 
 rule_files:
-  - "alert.rules.yml"
-
+  - "/etc/prometheus/alert.rules.yml"
+  
 scrape_configs:
   - job_name: 'lawchat-api'
     metrics_path: /metrics
