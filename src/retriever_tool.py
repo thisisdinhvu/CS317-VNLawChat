@@ -83,7 +83,7 @@ def retrieve_from_pinecone(query_text: str) -> str:
         str: A formatted string containing the related content from the top 3 matches.
     """
     if not query_text or not query_text.strip():
-        return "Error: Query text cannot be empty"
+        return "Error: Query text cannot be empty, provide text"
 
     try:
         print('using retriever tool')
