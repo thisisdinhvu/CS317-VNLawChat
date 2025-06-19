@@ -108,7 +108,12 @@ def chatbot(state: State):
             return {"messages": [response]}
         elif tool_response.name == "add_memory":
             # Simply acknowledge once and stop further processing for this turn
-            return {"messages": [AIMessage(content=f"{tool_response.content}")]}
+            prompt = (
+                f"You are a helpful assistant. The user says: '{user_message.content}'.\n\n"
+                "Everything you say must be in Vietnamese"
+            )
+            response = llm.invoke([HumanMessage(content=prompt)])
+            return {"messages": [response]}
 
     # No tool response, let the LLM decide what to do with a clear system instruction
     system_message = SystemMessage(
