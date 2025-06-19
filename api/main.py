@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import uuid
+from prometheus_client import Counter
 
 from langchain_core.messages import HumanMessage, AIMessage
 from src.agent import run_agent  # Đảm bảo import đúng
@@ -57,11 +58,18 @@ INFERENCE_TIME = Histogram(
     buckets=(0.1, 0.5, 1, 2, 3, 5)
 )
 
+ERROR_5XX_COUNTER = Counter(
+    "http_5xx_errors_total",
+    "Number of HTTP 5xx responses",
+    ["path"]
+)
+
 # ========================
 # FASTAPI INIT
 # ========================
 app = FastAPI(title="LangGraph Chat Agent API")
 Instrumentator().instrument(app).expose(app)
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -108,22 +116,12 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Error processing chat request: {str(e)}")
 
 # ========================
-# /test-alert endpoint
+# /alert: Nhận cảnh báo từ Alertmanager (Webhook)
 # ========================
-@app.get("/test-alert")
-def test_alert(trigger: str = "500"):
-    if trigger == "500":
-        alert_logger.error("Simulated server error for testing High5xxErrorRate alert.")
-        raise HTTPException(status_code=500, detail="Simulated 500 error")
-    elif trigger == "slow":
-        start = time.time()
-        time.sleep(3)
-        duration = time.time() - start
-        INFERENCE_TIME.observe(duration)
-        alert_logger.error(f"Simulated slow inference: {duration:.2f}s")
-        return {"message": f"Simulated slow inference completed in {duration:.2f}s"}
-    else:
-        return {"message": "No test triggered"}
+@app.post("/alert")
+async def receive_alert(payload: dict):
+    alert_logger.warning(f"[ALERTMANAGER] Alert received: {payload}")
+    return {"status": "received"}
 
 # ========================
 # Homepage

@@ -3,59 +3,155 @@
 <head>
   <meta charset="UTF-8" />
   <title>Luật Việt Nam Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px auto;
-      max-width: 600px;
-      background-color: #f6f8fa;
+    * {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f4f8;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #ffffff;
+      border-radius: 0;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .header {
       padding: 20px;
-      border-radius: 10px;
+      font-size: 1.6em;
+      font-weight: 600;
+      background-color: #3498db;
+      color: white;
+      text-align: center;
+      border-radius: 0;
     }
-    h2 {
-      color: #2c3e50;
+
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background-color: #ecf3ff;
     }
-    textarea, button {
-      width: 100%;
-      margin-top: 10px;
-      font-size: 1em;
-    }
-    textarea {
-      height: 120px;
-      padding: 10px;
-    }
-    #response {
-      margin-top: 20px;
+
+    .message {
+      max-width: 75%;
+      padding: 14px 20px;
+      border-radius: 16px;
+      line-height: 1.6;
+      font-size: 1.1em;
       white-space: pre-line;
-      background-color: #eef;
-      padding: 15px;
-      border-radius: 5px;
+    }
+
+    .user {
+      align-self: flex-end;
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border-top-right-radius: 0;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background-color: #ffffff;
+      color: #2c3e50;
+      border-top-left-radius: 0;
+      border-left: 6px solid #3498db;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 16px;
+      border-top: 1px solid #ccc;
+      background: #fff;
+    }
+
+    textarea {
+      flex: 1;
+      resize: none;
+      padding: 12px;
+      font-size: 1em;
+      border-radius: 10px;
+      border: 2px solid #ccc;
+      line-height: 1.5;
+    }
+
+    button {
+      margin-left: 12px;
+      padding: 12px 20px;
+      font-size: 1em;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .loading {
+      font-style: italic;
+      opacity: 0.6;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        border-radius: 0;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>💬 Hỏi luật Việt Nam</h2>
-  <textarea id="query" placeholder="Nhập câu hỏi về luật pháp..."></textarea>
-  <button onclick="sendQuestion()">Gửi câu hỏi</button>
-  <div id="response"></div>
+  <div class="container">
+    <div class="header">💬 Chatbot Luật Việt Nam</div>
+    <div class="chat-box" id="chat-box"></div>
+    <div class="input-area">
+      <textarea id="query" rows="2" placeholder="Nhập câu hỏi..."></textarea>
+      <button onclick="sendQuestion()">Gửi</button>
+    </div>
+  </div>
 
   <script>
     function generateThreadId() {
       return 'thread-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     }
 
-    let currentThreadId = generateThreadId();  // Tạo thread_id mỗi lần load lại trang
+    let currentThreadId = generateThreadId();
+
+    function addMessage(text, sender) {
+      const box = document.getElementById('chat-box');
+      const msg = document.createElement('div');
+      msg.className = `message ${sender}`;
+      msg.textContent = text;
+      box.appendChild(msg);
+      box.scrollTop = box.scrollHeight;
+    }
 
     async function sendQuestion() {
-      const query = document.getElementById('query').value.trim();
-      const resBox = document.getElementById('response');
+      const input = document.getElementById('query');
+      const question = input.value.trim();
+      if (!question) return;
 
-      if (!query) {
-        resBox.textContent = '⚠️ Vui lòng nhập câu hỏi.';
-        return;
-      }
-
-      resBox.textContent = '⏳ Đang xử lý...';
+      addMessage(question, 'user');
+      input.value = '';
+      addMessage('⏳ Đang trả lời...', 'bot');
 
       try {
         const res = await fetch('/chat', {
@@ -64,20 +160,21 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            user_input: query,
+            user_input: question,
             thread_id: currentThreadId
           })
         });
 
-        if (!res.ok) {
-          const err = await res.text();
-          throw new Error(err);
-        }
-
         const data = await res.json();
-        resBox.textContent = data.response || '❌ Không có phản hồi từ chatbot.';
-      } catch (error) {
-        resBox.textContent = '⚠️ Lỗi gửi yêu cầu: ' + error.message;
+        // Xoá tin nhắn "loading"
+        const box = document.getElementById('chat-box');
+        box.removeChild(box.lastChild);
+
+        addMessage(data.response || '❌ Không có phản hồi từ chatbot.', 'bot');
+      } catch (err) {
+        const box = document.getElementById('chat-box');
+        box.removeChild(box.lastChild);
+        addMessage('⚠️ Lỗi gửi yêu cầu: ' + err.message, 'bot');
       }
     }
   </script>
