@@ -32,16 +32,6 @@ groups:
           summary: "Tỉ lệ lỗi 5xx cao"
           description: "Hơn 5% request tới /chat trả về lỗi 5xx."
 
-      # 4. Quá nhiều lần GC Gen2 (gợi ý memory leak)
-      - alert: FrequentGCCollections
-        expr: increase(python_gc_collections_total{generation="2"}[5m]) > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Thu gom rác Gen2 thường xuyên"
-          description: "GC Gen2 xảy ra hơn 10 lần trong 5 phút."
-
       # 5. Sử dụng RAM cao
       - alert: HighMemoryUsage
         expr: process_resident_memory_bytes > 500000000  # > ~600MB (tăng từ 300MB)
@@ -51,16 +41,6 @@ groups:
         annotations:
           summary: "Dùng nhiều RAM"
           description: "Tiến trình chatbot dùng quá 500MB RAM."
-
-      # 6. Quá nhiều file descriptors đang mở
-      - alert: TooManyOpenFDs
-        expr: process_open_fds / process_max_fds > 0.8
-        for: 1m
-        labels:
-          severity: warning
-        annotations:
-          summary: "FD gần hết giới hạn"
-          description: "Đã dùng hơn 80% file descriptors cho phép."
 
       # 7. Không có request nào tới API trong 5 phút
       - alert: NoAPIRequests
