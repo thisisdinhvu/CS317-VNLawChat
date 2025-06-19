@@ -32,7 +32,24 @@ scrape_configs:
           level:
       - output:
           source: message
-
+          
+  - job_name: alerts
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: alerts
+          __path__: /logs/alerts.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) \[ALERT\] (?P<level>\w+): (?P<message>.*)'
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02 15:04:05,000'
+      - labels:
+          level:
+      - output:
+          source: message
 
   # 2. Docker stdout/stderr logs
   - job_name: docker_stdout

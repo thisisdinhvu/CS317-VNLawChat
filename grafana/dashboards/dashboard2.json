@@ -44,7 +44,7 @@
       },
       "targets": [
         {
-          "expr": "rate(http_requests_total{handler!=\"/metrics\"}[1m])",
+          "expr": "sum(rate(http_requests_total{handler!=\"/metrics\"}[30s]))",
           "legendFormat": "Requests per second",
           "refId": "A"
         }
@@ -66,7 +66,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+          "expr": "100 * sum(rate(http_requests_total{handler=\"/chat\", status=~\"5..\"}[1m])) / sum(rate(http_requests_total{handler=\"/chat\"}[1m]))",
           "legendFormat": "5xx Error Rate (%)",
           "refId": "A"
         }

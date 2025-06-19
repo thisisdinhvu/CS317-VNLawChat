@@ -1,72 +1,53 @@
 groups:
   - name: chatbot-alerts
     rules:
-      # === 1. Latency cảnh báo nếu 95% request lâu hơn 2s ===
+
+      # 1. Cảnh báo nếu 95% request mất hơn 25s để phản hồi
       - alert: HighRequestLatency
-        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{handler="/chat"}[5m])) by (le)) > 25
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "High latency on /chat"
-          description: "95th percentile request latency is > 2s."
+          summary: "Độ trễ cao trên endpoint /chat"
+          description: "95% request tới /chat có độ trễ lớn hơn 25s."
 
-      # === 2. Inference time (nếu bạn có metric inference_duration_seconds custom) ===
+      # 2. Cảnh báo nếu inference trung bình > 25s (dựa trên metric `chat_inference_duration_seconds`)
       - alert: SlowInference
-        expr: avg_over_time(inference_duration_seconds[2m]) > 2
+        expr: rate(chat_inference_duration_seconds_sum[5m]) / rate(chat_inference_duration_seconds_count[5m]) > 25
         for: 1m
         labels:
           severity: warning
         annotations:
-          summary: "Model inference is slow"
-          description: "Average inference time is above 2s."
+          summary: "Thời gian suy luận chậm"
+          description: "Trung bình thời gian inference vượt quá 25s."
 
-      # === 3. High error rate trên các endpoint ===
+      # 3. Tỉ lệ lỗi 5xx > 5% trong 1 phút
       - alert: High5xxErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[2m]) / rate(http_requests_total[2m]) > 0.2
+        expr: sum(rate(http_requests_total{handler="/chat", status=~"5.."}[1m])) / sum(rate(http_requests_total{handler="/chat"}[1m])) > 0.05
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "High 5xx Error Rate"
-          description: "More than 20% requests return 5xx errors."
+          summary: "Tỉ lệ lỗi 5xx cao"
+          description: "Hơn 5% request tới /chat trả về lỗi 5xx."
 
-      # === 4. GC collect abnormal (gợi ý, nhiều vòng GC liên tục có thể do memory leak) ===
-      - alert: FrequentGCCollections
-        expr: increase(python_gc_collections_total{generation="2"}[5m]) > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Frequent GC collections"
-          description: "GC Gen2 has been collected more than 10 times in 5 minutes."
-
-      # === 5. High Memory Usage (từ process) ===
+      # 5. Sử dụng RAM cao
       - alert: HighMemoryUsage
-        expr: process_resident_memory_bytes > 300000000  # > ~300MB
+        expr: process_resident_memory_bytes > 500000000  # > ~600MB (tăng từ 300MB)
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "High memory usage"
-          description: "The chatbot process is using more than 300MB RAM."
+          summary: "Dùng nhiều RAM"
+          description: "Tiến trình chatbot dùng quá 500MB RAM."
 
-      # === 6. Too many open file descriptors (đôi khi gây lỗi server) ===
-      - alert: TooManyOpenFDs
-        expr: process_open_fds / process_max_fds > 0.8
-        for: 1m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Too many file descriptors used"
-          description: "More than 80% of max file descriptors are open."
-
-      # === 7. API Unresponsive (không request nào trong 5m) ===
+      # 7. Không có request nào tới API trong 5 phút
       - alert: NoAPIRequests
-        expr: rate(http_requests_total[5m]) < 0.01
+        expr: sum(rate(http_requests_total{handler!="/metrics"}[5m])) < 0.002 
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "No incoming requests"
-          description: "No API requests received in the last 5 minutes."
+          summary: "Không có request API"
+          description: "Không có request nào gửi tới chatbot trong 5 phút qua."

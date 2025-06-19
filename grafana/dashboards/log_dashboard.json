@@ -23,12 +23,29 @@
     },
     {
       "type": "logs",
+      "title": "Lawchat API Error Log Stream",
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "{job=\"alerts\"}",
+          "refId": "B",
+          "datasource": { "type": "loki", "uid": "loki" }
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "dedupStrategy": "none"
+      }
+    },  
+    {
+      "type": "logs",
       "title": "Docker stdout Logs",
       "gridPos": { "x": 0, "y": 9, "w": 24, "h": 8 },
       "targets": [
         {
           "expr": "{job=\"docker_stdout\", stream=\"stdout\"}",
-          "refId": "B",
+          "refId": "C",
           "datasource": { "type": "loki", "uid": "loki" }
         }
       ],
@@ -45,7 +62,7 @@
       "targets": [
         {
           "expr": "{job=\"docker_stdout\", stream=\"stderr\"}",
-          "refId": "C",
+          "refId": "D",
           "datasource": { "type": "loki", "uid": "loki" }
         }
       ],
@@ -62,7 +79,7 @@
       "targets": [
         {
           "expr": "{job=\"syslog\"}",
-          "refId": "D",
+          "refId": "E",
           "datasource": { "type": "loki", "uid": "loki" }
         }
       ],
