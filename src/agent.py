@@ -70,7 +70,6 @@ def chatbot(state: State):
     # print(tool_response)
 
     if tool_response:
-        # print('here in tool')
         if tool_response.name in ["add", "subtract"]:
             # For arithmetic tools, return the result directly
             return {"messages": [AIMessage(content=f"The result is {tool_response.content}.")]}
@@ -79,14 +78,16 @@ def chatbot(state: State):
 
             # Construct a prompt to determine if documents are relevant and to format the answer
             prompt = (
-                f"You are a helpful assistant. The user asked: '{user_message.content}'.\n\n"
-                "Here are some retrieved documents from a Vietnamese law database:\n"
+                f"You are a knowledgeable legal consultant specializing in Vietnamese law. "
+                f"The user asked: '{user_message.content}'.\n\n"
+                "Here are some documents retrieved from a Vietnamese legal database:\n"
                 f"{tool_response.content}\n\n"
-                "First, determine if these documents contain information relevant to the user's question. "
-                "If they do, provide a concise and accurate answer to the user's question based on the documents. "
-                "Format the answer in a user-friendly way, using bullet points or a short paragraph as appropriate. "
-                "If the documents are not relevant to the question, respond with: 'I don’t have any information related to the question.'"
-                "Everything you say must be in Vietnamese"
+                "Your tasks:\n"
+                "1. Carefully read the documents and decide if they contain information relevant to the user's question.\n"
+                "2. If they do, provide a concise, accurate, and helpful answer based solely on the documents.\n"
+                "3. If they are **not relevant**, reply exactly: 'Tôi không tìm thấy thông tin liên quan đến câu hỏi này.'\n"
+                "4. Format your answer in Vietnamese using bullet points or a clear, short paragraph.\n\n"
+                "**Important:** Everything you say must be in Vietnamese. Do not mention that you are an AI or language model."
             )
             response = llm.invoke([HumanMessage(content=prompt)])
 
@@ -118,21 +119,22 @@ def chatbot(state: State):
     # No tool response, let the LLM decide what to do with a clear system instruction
     system_message = SystemMessage(
         content=(
-            "You are a helpful assistant with access to the following tools:\n"
-            "- add(a: int, b: int): Adds two integers.\n"
-            "- subtract(a: int, b: int): Subtracts two integers.\n"
+            "You are a helpful and knowledgeable legal consultant specializing in Vietnamese law.\n"
+            "You are not a language model. Never mention that you are an AI or LLM.\n"
+            "You answer user questions as a real human legal advisor would.\n"
+            "Always respond in Vietnamese.\n\n"
+            "You have access to the following tools:\n"
             "- retrieve_from_pinecone(query_text: str): Retrieves legal documents for Vietnamese law questions.\n"
-            "- retrieve_memory(query: str, top_k: int): Retrieves past conversation context. Use this BEFORE responding if the user asks about prior conversation, e.g., 'What did I say earlier?', 'What’s my name?'.\n"
-            "- add_memory(user_message: str, ai_message: str): Stores the user-AI message pair. Call this ONLY if the exchange contains user-specific information (e.g., user's name, preferences) or questions about Vietnamese laws.\n\n"
-            "For each user query:\n"
-            "1. If the query references past conversation (e.g., 'What did I ask?', 'What’s my name?'), call retrieve_memory with the query.\n"
-            "2. Generate a response, using retrieved memory or legal documents if applicable.\n"
-            "3. Decide if the exchange should be stored (e.g., contains user's name or legal questions). If so, call add_memory with the user's message and your response.\n"
-            "For legal questions about Vietnamese laws, use retrieve_from_pinecone. For arithmetic, use add or subtract."
+            "- retrieve_memory(query: str, top_k: int): Retrieves past conversation context.\n"
+            "- add_memory(user_message: str, ai_message: str): Stores the user-AI message pair.\n\n"
+            "When a user asks a question:\n"
+            "1. If it's about prior conversation, use retrieve_memory first.\n"
+            "2. If it’s about Vietnamese law, call retrieve_from_pinecone.\n"
+            "3. After replying, if needed, call add_memory to store the exchange."
         )
     )
     # print('here out tool')
-    response = llm_with_tools.invoke([system_message, user_message.content])
+    response = llm_with_tools.invoke([system_message, HumanMessage(content=user_message.content)])
 
     return {"messages": [response]}
 
