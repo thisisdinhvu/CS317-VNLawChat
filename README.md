@@ -9,6 +9,6 @@ image
 
 Before Fine-tunning model, we have to preprocess data extremely carefull because cross-encoder in reranker stage is very sensitive with text data. Therefore, we utilize DvC which is a tool to controll data version and combine it with AWS Bucket S3 to store data version
 
-![alt text](https://github.com/thisisdinhvu/CS317-VNLawChat/tree/main/images/dvc.png?raw=true)
-![alt text](https://github.com/thisisdinhvu/CS317-VNLawChat/tree/main/images/AWS3.png?raw=true)
+![DvC CLI](https://github.com/thisisdinhvu/CS317-VNLawChat/tree/main/images/dvc.png?raw=true)
+![AWS S3](https://github.com/thisisdinhvu/CS317-VNLawChat/tree/main/images/AWS3.png?raw=true)
 
