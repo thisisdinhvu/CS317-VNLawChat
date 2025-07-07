@@ -15,13 +15,21 @@ Before fine-tuning the model, we need to carefully preprocess the dataset, as th
 To address this, we use DVC (Data Version Control) to manage and track changes in our datasets over time. DVC allows us to maintain a consistent versioning system for data, ensuring reproducibility across experiments. We integrate DVC with AWS S3 Bucket as the remote storage backend, which enables seamless collaboration and access to different versions of the dataset across team members and environmen
 
 <p align="center">
-  <img src="./images/dvc.png" width="500"/>
-  <img src="./images/AWS3.png" width="500"/>
+  <img src="./images/dvc.png" width="700"/>
 </p>
 
 <p align="center">
-  DVC command line and AWS S3 BUCKET UI
+  DVC command line
 </p>
+
+<p align="center">
+  <img src="./images/AWS3.png" width="700"/>
+</p>
+
+<p align="center">
+   AWS S3 BUCKET UI
+</p>
+
 
 # HYPERPARAM TUNNING
 
